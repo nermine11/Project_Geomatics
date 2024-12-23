@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+ <head>
+   <meta charset="utf-8">
+   <title>Monuments Historiques de France</title>
+   <link rel="icon" href="data:,">
+   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+   <link rel="stylesheet" type="text/css" href="exo1.css">
+   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+ </head>
+
+<body>
+
+ 
+
+  <!-- Map -->
+  <div id="map"></div>
+
+  <script>
+    "use strict";
+
+    window.onload = async () => {
+        let map = L.map('map',{
+          center: [48.665343,2.842226],
+          zoom: 9
+      });
+        var layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
+              maxZoom: 15,
+              attribution: '© <a href="http://www.openstreetmap.org/copyright">OSM</a>'
+        });
+        layer.addTo(map);
+
+        let response = await fetch("./monuments_historiques.geojson");
+        let data = await response.json();
+        let geoLayer = L.geoJSON(data);
+        
+    };
+  </script>
+
+
+ </body>
+</html>
