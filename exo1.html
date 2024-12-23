@@ -31,7 +31,7 @@
         });
         layer.addTo(map);
 
-        let response = await fetch("./monuments_historiques.geojson");
+        let response = await fetch("./prog_web/monuments_historiques");
         let data = await response.json();
         let geoLayer = L.geoJSON(data);
         
