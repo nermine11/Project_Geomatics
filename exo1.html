@@ -18,9 +18,9 @@
       <span class = "title_name"> Monuments Historiques</span>
     </div>    
       <!-- Dropdown Filter -->
-      <div id="region-select-container" >
+      <div id="region-select-container"  >
         <label for="region_select">Région</label>
-        <select name="region" id="region_select">
+        <select name="region" id="region_select" >
           <option value="">--Région--</option>
         </select>
       <div id="depart-select-container" >
@@ -34,83 +34,94 @@
   <div id="map"></div>
   <script>
     "use strict";
-    function add_options_department(data){
+    let departments_regions = {}; 
+    function add_options_depart_region(data){
         let departments_dict = {};
         let regions_dict = {};
-        let departments_regions = {}
         let i;
         for( i = 0; i< data.features.length; i++){
-            let departement = (((data.features)[i]).properties['departement_en_lettres'])[0];
-            console.log("dept", departement);
-            let region      = (((data.features)[i]).properties['region'])[0];
-            console.log("region", region);
-            if (departement in departments_dict){
-              departments_dict[departement]++;
-            }
-            else{
-              departments_dict[departement] = 1;
-
-            }
-            if (region in regions_dict){
-              regions_dict[region] ++;
-            }
-            else{
-              regions_dict[region] = 1;
-
-            }
-            if ((region in departments_regions)){
-              if(!((departments_regions[region]).includes(departement))){
-                departments_regions[region].push(departement);
-              }
-            }else {
-              departments_regions[region] = [departement];
-            }
+          let departement = (((data.features)[i]).properties['departement_en_lettres'])[0];
+          let region      = (((data.features)[i]).properties['region'])[0];
+          if (departement in departments_dict){
+            departments_dict[departement]++;
           }
-        let select_region = document.getElementById('region_select');
-        let select_dept= document.getElementById('depart_select');
-        const options_dep = Object.keys(departments_dict);
-        const options_reg =  Object.keys(regions_dict);
-        console.log(options_dep);
-        console.log(options_reg);
-        options_reg.forEach(optionValue => {
-          const option = document.createElement('option');
-          option.value = optionValue; 
-          option.textContent = optionValue +' ' + regions_dict[optionValue];
-          select_region.appendChild(option); 
-          console.log(select_region);
-      });
-        options_dep.forEach(optionValue => {
+          else{
+            departments_dict[departement] = 1;
+          }
+          if (region in regions_dict){
+            regions_dict[region] ++;
+          }
+          else{
+            regions_dict[region] = 1;
+          }
+          if ((region in departments_regions)){
+            if(!((departments_regions[region]).includes(departement))){
+              departments_regions[region].push(departement);
+            }
+          }else {
+            departments_regions[region] = [departement];
+          }
+        }
+        add_options(regions_dict, 'region_select');
+        add_options(departments_dict, 'depart_select');
+
+    }    
+    function add_options(options, id){
+      let select_elt= document.getElementById(id);
+      const options_elt = Object.keys(options);
+      options_elt.forEach(optionValue => {
           const option= document.createElement('option');
           option.value = optionValue; 
-          option.textContent = optionValue +' ' + departments_dict[optionValue];
-          select_dept.appendChild(option); 
+          option.textContent = optionValue +' ' + options[optionValue];
+          select_elt.appendChild(option); 
       });
-    }    
-    function createGeolayer( map, data, value){
+    }
+    function clear_depart_dropdown(id) {
+      let select_elt = document.getElementById(id);
+      while(select_elt.options.length > 1) {
+        select_elt.remove(1); 
+      }
+    }
+    //based on the region
+    function modify_depart_dropdown(map, data, region){ 
+      let depart_id = 'depart_select';
+      clear_depart_dropdown(depart_id);
+      let departments = departments_regions[region];
+      add_options(departments, depart_id);
+    }
+    function createGeolayer( map, data, value, id, property){
+      if(id == 'region_select'){
+        modify_depart_dropdown(map, data, value);
+      }
       return L.geoJSON(data, {
         filter: function (feature){
-          return feature.properties['departement_en_lettres'][0] === value;
+          return feature.properties[property][0] === value;
         },
         onEachFeature: function (feature, layer) {
-              console.log("value", value);
-              if (!(((feature.properties['departement_en_lettres'])[0]) === value)) {
+              if (!(((feature.properties[property])[0]) === value)) {
                   return null; // Exclude any undefined or invalid features
               }
               layer.bindPopup(feature.properties['titre_editorial_de_la_notice']);
         },
       }).addTo(map);
     }
-    function modify_layer(map, geoLayer, data, value ){
+    function modify_layer(map, geoLayer, data, value , id){
+      let property;
       map.removeLayer(geoLayer);
-      return createGeolayer(map, data, value);
-    
+      if (id == 'region_select'){
+        property = 'region';
+      }
+      if (id == 'depart_select'){
+        property = 'departement_en_lettres';
+      }
+      return createGeolayer(map, data, value, id, property);
     }
-    function get_user_select(map, geoLayer, id, data ){
+    function get_user_select(map, geoLayer,id , data ){
       let user_selection = document.getElementById(id);
       user_selection.addEventListener('change', function(event){
         let element_selected = event.target.value;
-        console.log("yoo", element_selected);
-        geoLayer = modify_layer(map, geoLayer, data, element_selected)
+        console.log("element_selected", element_selected);
+        geoLayer = modify_layer(map, geoLayer, data, element_selected, id);
       });
     }
     window.onload = async () => {
@@ -126,9 +137,10 @@
         let response = await fetch("./monuments_historiques.geojson");
         let data = await response.json();
         let geoLayer = L.geoJSON(data);
-        const depart_select_id = 'depart_select';
-        add_options_department(data);
-        get_user_select(map, geoLayer, depart_select_id, data);
+        add_options_depart_region(data);
+        get_user_select(map, geoLayer, 'region_select', data);
+        get_user_select(map, geoLayer, 'depart_select', data);
+
     };
   </script>
  </body>
