@@ -5,8 +5,14 @@
    <title>Monuments Historiques de France</title>
    <link rel="icon" href="data:,">
    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.1/dist/MarkerCluster.Default.css"/>
+
    <link rel="stylesheet" type="text/css" href="projet.css">
+
    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+   <script src="https://unpkg.com/leaflet.markercluster@1.5.1/dist/leaflet.markercluster.js"></script>
+   <script src="https://unpkg.com/leaflet-geojson"></script>
    <style>
     #map { width: 2000px; height: 1400px; }
   </style>
@@ -38,7 +44,6 @@
     let departments_regions = {}; 
     let departments_dict = {};
     let regions_dict = {};
-
     function fill_dicts_depart_region(data){
         let i;
         for( i = 0; i< data.features.length; i++){
@@ -74,9 +79,11 @@
         }
         console.log("departments-regions",departments_regions );
     }    
+    /* 
+      add dropdown menu options
+    */
     function add_options(options, id){
       let select_elt= document.getElementById(id);
-      //console.log(select_elt);
       console.log(options);
       const options_elt = Object.keys(options);
       options_elt.forEach(optionValue => {
@@ -86,38 +93,65 @@
           select_elt.appendChild(option); 
       });
     }
+    /* 
+      remove all the map layers
+    */
+    function remove_layers(map) {
+      map.eachLayer(function (layer) {
+          // Remove GeoJSON layers
+          if (layer instanceof L.GeoJSON) {
+              map.removeLayer(layer);
+          }
+
+          // Remove MarkerClusterGroup layers
+          if (layer instanceof L.MarkerClusterGroup) {
+              map.removeLayer(layer);
+          }
+      });
+    }
+  /* 
+    reset the geo_Layer as if you have just launched the website
+  */
+  function reset_geo_Layer(map, data,geojsonMarkerOptions){
+
+    const geoLayer = L.geoJSON(data, {
+      onEachFeature: function (feature, layer) {
+          const popupContent = feature.properties['titre_editorial_de_la_notice'];
+          layer.bindPopup(popupContent);
+      },
+      pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, geojsonMarkerOptions);
+      },
+    });
+    const markers = L.markerClusterGroup().addLayer(geoLayer); // Add to marker cluster
+    map.addLayer(markers); // Add marker cluster to the map
+    return geoLayer;
+  }
+
+
+    /* 
+      clear dropdown menu
+    */
     function clear_dropdown(id) {
       let select_elt = document.getElementById(id);
       while(select_elt.options.length > 1) {
         select_elt.remove(1); 
       }
     }
-    //based on the region
+    /* 
+    modify the departments dropodwon options to fit the chosen region
+    */
     function modify_depart_dropdown(map, data, region){ 
       let depart_id = 'depart_select';
       clear_dropdown(depart_id);
       let departments = departments_regions[region];
-      console.log(" modify_depart_dropdown");
       add_options(departments, depart_id);
     }
-    function reset_geo_Layer(map, data, geoLayer){
-      map.removeLayer(geoLayer);
-      clear_dropdown('depart_select');
-      clear_dropdown('region_select');
-      add_options(regions_dict, 'region_select');
-      add_options(departments_dict, 'depart_select');
-      return L.geoJSON(data, {
-        filter: function () {
-          return false; 
-        },
-        onEachFeature: function (feature, layer) {
-          // No popups or interactivity
-        },
-      }).addTo(map);
-}
 
-    
-    function createGeolayer( map, data, value, id, property){
+     /* 
+      create new geoLayer depending on region or department chosen 
+    */
+    function createGeolayer( map, data, value, id, property, geojsonMarkerOptions){
       if(id == 'region_select'){
         modify_depart_dropdown(map, data, value);
       }
@@ -131,21 +165,30 @@
               }
               layer.bindPopup(feature.properties['titre_editorial_de_la_notice']);
         },
+        pointToLayer: function (feature, latlng) {
+          return L.circleMarker(latlng, geojsonMarkerOptions); // Apply the same marker style
+        },
       }).addTo(map);
-      console.log("value creategeolayer", value);
       return geoLayer; 
     }
-
-
-    function modify_layer(map, geoLayer, data, value , id){
+    /* 
+      reset_dropdown_menu
+    */
+    function reset_dropdown_menu(){
+        clear_dropdown('depart_select');
+        clear_dropdown('region_select');
+        add_options(regions_dict, 'region_select');
+        add_options(departments_dict, 'depart_select');
+    }
+    /* 
+      wrapper function to call createGeolayer()
+    */
+    function modify_layer(map, geoLayer, data, value , id, geojsonMarkerOptions){
       let property;
-      map.eachLayer(function (layer) {
-        if (layer instanceof L.GeoJSON) {
-          map.removeLayer(layer);
-        }
-      });
+      remove_layers(map);
       if ( value == "Region" || value == "Department"){
-        return reset_geo_Layer(map, data, geoLayer);
+        reset_dropdown_menu();
+        return reset_geo_Layer(map, data);
       }
       if (id == 'region_select'){
         property = 'region';
@@ -153,37 +196,50 @@
       if (id == 'depart_select'){
         property = 'departement_en_lettres';
       }
-      geoLayer = createGeolayer(map, data, value, id, property);
+      geoLayer = createGeolayer(map, data, value, id, property, geojsonMarkerOptions);
       return geoLayer; 
     }
-    function get_user_select(map, geoLayer,id , data ){
+    /* 
+      Listen to user choice of options in the dropdown menu
+    */
+    function get_user_select(map, geoLayer,id , data, geojsonMarkerOptions ){
       let user_selection = document.getElementById(id);
       user_selection.addEventListener('change', function(event){
         let element_selected = event.target.value;
         console.log("element_selected", element_selected);
-        geoLayer = modify_layer(map, geoLayer, data, element_selected, id);
+        geoLayer = modify_layer(map, geoLayer, data, element_selected, id, geojsonMarkerOptions);
         return geoLayer;
       });
     }
-    window.onload = async () => {
-        let map = L.map('map',{
-          center: [48.665343,2.842226],
+      window.onload = async () => {
+        let map = L.map('map', {
+          center: [48.665343, 2.842226],
           zoom: 7
-      });
-        var layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{
-              maxZoom: 15,
-              attribution: '© <a href="http://www.openstreetmap.org/copyright">OSM</a>'
         });
-        layer.addTo(map);
+
+        var layer = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 15,
+          attribution: '© <a href="http://www.openstreetmap.org/copyright">OSM</a>'
+        }).addTo(map);
+
         let response = await fetch("./monuments_historiques.geojson");
         let data = await response.json();
-        let geoLayer = L.geoJSON(data);
-        geoLayer.addTo(map);
+
+        const geojsonMarkerOptions = {
+          radius: 8,
+          fillColor: "#ff7800",
+          color: "#000",
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 0.8,
+        };
+
+        let geoLayer = reset_geo_Layer(map, data, geojsonMarkerOptions);
         fill_dicts_depart_region(data);
         add_options(regions_dict, 'region_select');
         add_options(departments_dict, 'depart_select');
-        get_user_select(map, geoLayer, 'region_select', data);
-        get_user_select(map, geoLayer, 'depart_select', data);
+        get_user_select(map, geoLayer, 'region_select', data, geojsonMarkerOptions);
+        get_user_select(map, geoLayer, 'depart_select', data, geojsonMarkerOptions);
     };
   </script>
  </body>
