@@ -1,0 +1,54 @@
+
+  #map {
+    width: calc(100% - 350px);
+    height: 100vh;
+    margin-left: 350px;
+  }
+
+  *{
+    margin : 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+
+
+  /* Sidebar Styles */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100%;
+    background-color: #11101d;
+
+  }
+
+  .sidebar .title_details{
+    height: 60px;
+    width: 100%;
+    display: flex;
+    align-items: center;  
+}
+  .sidebar .title_details{
+    font-size: 22 px;
+    color: #fff;
+    font-weight: 600;
+  }
+  .sidebar label {
+    font-size: 20px;
+    font-style: bold;
+    margin-bottom: 5px;
+    display: block;
+    color: #555;
+  }
+
+  .sidebar select, .sidebar input {
+    width: 100%;
+    padding: 5px 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+  }
+
