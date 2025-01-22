@@ -118,8 +118,13 @@
 
     const geoLayer = L.geoJSON(data, {
       onEachFeature: function (feature, layer) {
-          const popupContent = feature.properties['titre_editorial_de_la_notice'];
-          layer.bindPopup(popupContent);
+          const popupContent = `
+                <div>
+                    <h4>${feature.properties['titre_editorial_de_la_notice']}</h4>
+                    <img src="./images/${feature.properties['reference']}.jpeg" alt="Image du monument" style="width:200px; height:auto;">
+                </div>
+            `;
+        layer.bindPopup(popupContent);
       },
       pointToLayer: function (feature, latlng) {
         return L.circleMarker(latlng, geojsonMarkerOptions);
@@ -168,7 +173,13 @@
               if (!(((feature.properties[property])[0]) === value)) {
                   return null; // Exclude any undefined or invalid features
               }
-              layer.bindPopup(feature.properties['titre_editorial_de_la_notice']);
+              const popupContent = `
+                <div>
+                    <h4>${feature.properties['titre_editorial_de_la_notice']}</h4>
+                    <img src="./images/${feature.properties['reference']}.jpeg" alt="Image du monument" style="width:200px; height:auto;">
+                </div>
+            `;
+          layer.bindPopup(popupContent);
         },
         pointToLayer: function (feature, latlng) {
           return L.circleMarker(latlng, geojsonMarkerOptions); // Apply the same marker style
