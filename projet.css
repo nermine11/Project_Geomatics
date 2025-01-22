@@ -1,4 +1,3 @@
-/* Ensure the map covers the entire screen */
 html, body {
   margin: 0;
   padding: 0;
@@ -9,8 +8,36 @@ html, body {
 #map {
   width: 100vw; /* Full viewport width */
   height: 100vh; /* Full viewport height */
-  position: absolute; /* Stays behind other elements */
+  position: absolute; /* Fills the entire screen */
   top: 0;
   left: 0;
   z-index: 0; /* Ensure it's behind the dropdowns */
+}
+
+.dropdown {
+  position: absolute;
+  top: 20px; /* Position dropdowns from top */
+  left: 20px; /* Position dropdowns from left */
+  z-index: 2; /* Ensures the dropdowns are above the map */
+  background-color: rgba(255, 255, 255, 0.8); /* Adds background for better visibility */
+  padding: 10px;
+  border-radius: 5px;
+}
+
+#region-select-container,
+#depart-select-container {
+  margin-bottom: 10px; /* Adds space between dropdowns */
+}
+
+label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+select {
+  width: 100%;
+  padding: 5px;
+  font-size: 16px;
+  background-color: white;
+  border-radius: 5px;
 }
