@@ -1,22 +1,29 @@
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from pathlib import Path
-import requests
-from time import sleep
 import base64
+from pathlib import Path
 import geojson
 
-options = webdriver.ChromeOptions()
+options = Options()
+options.add_argument("--headless")
+options.add_argument("--disable-gpu")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+
 output_folder = Path("images")
+output_folder.mkdir(exist_ok=True)
+
+
 def scrape_images(keyword):
 
     formatted_keyword = keyword.replace(" ", "+")
-    
+
     print(formatted_keyword)
     driver = webdriver.Chrome(options=options)
-    driver.get(f"https://www.google.com/search?q={formatted_keyword}&tbm=isch&brd_json=1")
+    driver.get(
+        f"https://www.google.com/search?q={formatted_keyword}+monument&tbm=isch&brd_json=1"
+    )
 
     try:
         first_image = driver.find_element(By.CSS_SELECTOR, "g-img > img")
@@ -37,18 +44,21 @@ def scrape_images(keyword):
     except Exception as e:
         print(e)
     finally:
-          driver.quit()
+        driver.quit()
 
 
 def main():
-    with open("monuments_historiques.geojson") as f:
+    with open("monuments_historiques.geojson", encoding="utf-8") as f:
         gj = geojson.load(f)
 
     references = []
     for feature in gj.get("features", []):
         references.append(feature.get("properties", {}).get("reference"))
-
+    cpt = 0
     for ref in references:
+        cpt += 1
         scrape_images(ref)
+        print(cpt)
+
 
 main()
