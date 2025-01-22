@@ -90,7 +90,7 @@
       options_elt.forEach(optionValue => {
         const option = document.createElement('option');
         option.value = optionValue;
-        option.textContent = optionValue + ' ' + options[optionValue];
+        option.textContent = optionValue + ':  ' + options[optionValue];
         select_elt.appendChild(option);
       });
     }
