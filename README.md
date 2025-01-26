@@ -1,6 +1,6 @@
 # Project_Geomatics
 
-Showcasing the monuments of France in a map with the possibilty t filter by region and department, and see the image of each monument,
+Showcasing the monuments of France in a map with the possibilty to filter by region and department, and see the image of each monument,
 
 Original map  is https://data.culture.gouv.fr/explore/dataset/liste-des-immeubles-proteges-au-titre-des-monuments-historiques/export/?disjunctive.departement_en_lettres&location=8,16.82032,-61.57837
 
